@@ -35,6 +35,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(snav_ros)
 
+catkin_package(CATKIN_DEPENDS geometry_msgs message_generation message_runtime std_msgs actionlib_msgs)
+
+# add the custom messages
+add_message_files(
+  DIRECTORY msg
+  FILES
+  TrackingCmd.msg)
+generate_messages(DEPENDENCIES geometry_msgs message_generation std_msgs)
+
 find_package(catkin REQUIRED
   cmake_modules
   geometry_msgs

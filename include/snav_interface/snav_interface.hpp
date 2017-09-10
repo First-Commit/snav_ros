@@ -29,7 +29,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * In addition Supplemental Terms apply.  See the SUPPLEMENTAL file. 
+ * In addition Supplemental Terms apply.  See the SUPPLEMENTAL file.
  ****************************************************************************/
 #ifndef _SNAV_INTERFACE_H_
 #define _SNAV_INTERFACE_H_
@@ -39,6 +39,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Quaternion.h>
+#include <snav_msgs/TrackingCmd.h> // is this the path if its not an external project?
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -50,9 +51,8 @@
 
 #include <snav/snapdragon_navigator.h>
 
-class SnavInterface
-{
-public:
+class SnavInterface {
+ public:
   /**
    * Constructor.
    * @param nh
@@ -135,6 +135,15 @@ public:
   void CmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg);
 
   /**
+   * Callback function for position input
+   * @param msg
+      geometry_msgs/Twist message., position x,y,z,yaw
+      geometry_msgs/Twist message., velocity xd,yd,zd,yaw_rate
+      geometry_msgs/Point message., acceleration xdd,ydd,zdd
+   */
+  void CmdPosCallback(const snav_msgs::TrackingCmd::ConstPtr& msg);
+
+  /**
    * Callback function to start propellers via ros message
    * @param msg
    *   Empty message
@@ -148,8 +157,8 @@ public:
    */
   void StopPropsCallback(const std_msgs::Empty::ConstPtr& msg);
 
-private:
-  void GetRotationQuaternion(tf2::Quaternion &q);
+ private:
+  void GetRotationQuaternion(tf2::Quaternion& q);
   void UpdatePosVelMessages(tf2::Quaternion q);
   void UpdateSimMessages();
 
@@ -157,11 +166,12 @@ private:
   void PublishOnGroundFlag();
 
   void SendVelocityCommand();
+  void SendTrackingCommand();
   void GetDSPTimeOffset();
 
   void SetRcCommandType(std::string rc_cmd_type_string);
   void SetRcMappingType(std::string rc_cmd_mapping_string);
-  
+
   ros::Publisher battery_voltage_publisher_;
   ros::Publisher pose_est_publisher_;
   ros::Publisher pose_des_publisher_;
@@ -169,13 +179,17 @@ private:
   ros::Publisher on_ground_publisher_;
   ros::Publisher clock_publisher_;
 
+  // this uses sn_send_rc_command()
   ros::Subscriber cmd_vel_subscriber_;
+  // this uses sn_send_trajectory_tracking_command()
+  // unimplemented sn_send_thrust_att_ang_vel_command()
+  ros::Subscriber cmd_pos_subscriber_;
   ros::Subscriber start_props_subscriber_;
   ros::Subscriber stop_props_subscriber_;
 
-  //public namespace nodehandle
+  // public namespace nodehandle
   ros::NodeHandle nh_;
-  //private namespace nodehandle
+  // private namespace nodehandle
   ros::NodeHandle pnh_;
 
   tf2_ros::TransformBroadcaster tf_pub_;
@@ -191,14 +205,16 @@ private:
   geometry_msgs::TransformStamped base_link_no_rot_transform_msg_;
 
   geometry_msgs::Twist commanded_vel_;
+  snav_msgs::TrackingCmd tracking_cmd_;
 
-  SnavCachedData *cached_data_;
+  SnavCachedData* cached_data_;
 
   bool valid_rotation_est_;
   bool valid_rotation_sim_gt_;
 
   ros::Time last_sn_update_;
   ros::Time last_vel_command_time_;
+  ros::Time last_tracking_cmd_time_;
 
   int64_t dsp_offset_in_ns_;
 
