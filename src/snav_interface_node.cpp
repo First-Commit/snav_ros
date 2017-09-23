@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 
     sn_iface.UpdateSnavData();
     sn_iface.UpdatePoseMessages();
+    sn_iface.PublishBarom();
 
     if (publish_est_data)
     {

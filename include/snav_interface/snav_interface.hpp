@@ -39,6 +39,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Quaternion.h>
+#include <std_msgs/Float64.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -71,6 +72,8 @@ public:
    * Update snav cached_data from snav RPC call
    **/
   void UpdateSnavData();
+
+  void UpdateBarom();
 
   /**
    * Publish estimation_frame_ -> base_link_frame_ transform
@@ -116,6 +119,8 @@ public:
    * Publish base_link pose in sim_gt_frame_ as geometry_msgs/PoseStamped
    */
   void PublishSimGtPose();
+
+  void PublishBarom();
 
   /**
    * Publish battery voltage and on_groung flag as Float32 and Bool msgs
@@ -164,6 +169,7 @@ private:
   
   ros::Publisher battery_voltage_publisher_;
   ros::Publisher pose_est_publisher_;
+  ros::Publisher barom_height_publisher_;
   ros::Publisher pose_des_publisher_;
   ros::Publisher pose_sim_gt_publisher_;
   ros::Publisher on_ground_publisher_;
@@ -189,6 +195,8 @@ private:
   geometry_msgs::TransformStamped sim_gt_transform_msg_;
   geometry_msgs::TransformStamped base_link_stab_transform_msg_;
   geometry_msgs::TransformStamped base_link_no_rot_transform_msg_;
+
+  std_msgs::Float64 barometer_msg_;
 
   geometry_msgs::Twist commanded_vel_;
 

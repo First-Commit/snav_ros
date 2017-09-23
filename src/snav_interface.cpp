@@ -44,6 +44,7 @@ SnavInterface::SnavInterface(ros::NodeHandle nh, ros::NodeHandle pnh) : nh_(nh),
 
   // Setup the publishers
   pose_est_publisher_ = nh_.advertise<geometry_msgs::PoseStamped>("pose", 10);
+  barom_height_publisher_ = nh_.advertise<std_msgs::Float64>("barometer", 10);
   pose_des_publisher_ = nh_.advertise<geometry_msgs::PoseStamped>("pose_des", 10);
   pose_sim_gt_publisher_ = nh_.advertise<geometry_msgs::PoseStamped>("pose_sim_gt", 10);
   battery_voltage_publisher_ = nh_.advertise<std_msgs::Float32>("battery_voltage", 10);
@@ -263,6 +264,16 @@ void SnavInterface::UpdatePoseMessages()
   GetRotationQuaternion(q);
   UpdatePosVelMessages(q);
   UpdateSimMessages();
+  UpdateBarom();
+}
+
+void SnavInterface::UpdateBarom() {
+  static float initial_pressure = cached_data_->barometer_0_raw.pressure;
+  float pressure = cached_data_->barometer_0_raw.pressure - initial_pressure;
+  //float temperature = cached_data_->barometer_0_raw.temperature;
+  float altitude = -0.083312*pressure;
+
+  barometer_msg_.data = altitude;
 }
 
 void SnavInterface::GetRotationQuaternion(tf2::Quaternion &q)
@@ -297,9 +308,9 @@ void SnavInterface::GetRotationQuaternion(tf2::Quaternion &q)
 void SnavInterface::UpdatePosVelMessages(tf2::Quaternion q)
 {
   tf2::Transform est_tf(tf2::Transform(q, tf2::Vector3(
-          cached_data_->pos_vel.position_estimated[0],
-          cached_data_->pos_vel.position_estimated[1],
-          cached_data_->pos_vel.position_estimated[2])));
+          cached_data_->vio_pos_vel.position_estimated[0],
+          cached_data_->vio_pos_vel.position_estimated[1],
+          cached_data_->vio_pos_vel.position_estimated[2])));
 
   est_transform_msg_.child_frame_id = base_link_frame_;
   est_transform_msg_.header.frame_id = estimation_frame_;
@@ -510,6 +521,10 @@ void SnavInterface::PublishEstPose(){
     pose_est_publisher_.publish(est_pose_msg_);
   else
     ROS_ERROR("Tried to publish invalid Est Pose");
+}
+
+void SnavInterface::PublishBarom() {
+  barom_height_publisher_.publish(barometer_msg_);
 }
 
 void SnavInterface::PublishDesiredPose(){
